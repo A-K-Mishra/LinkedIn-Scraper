@@ -32,9 +32,11 @@ sleep(5)
 
 
 # I have 2-step verification enabled, so next step is to get OTP
-otp_input = driver.find_element_by_name('pin')
 print('Enter OTP sent to your registered mobile number ...')
 otp = input().strip()
+    
+otp_input = driver.find_element_by_name('pin')
+
 otp_input.send_keys(otp)
 sleep(2)
 
@@ -63,7 +65,7 @@ for profile in profiles:
     driver.get(profile)
     sleep(10)
     sel  = Selector(text=driver.page_source)
-    name = sel.xpath('//title/text()').extract_first().split('|')[0]
+    name = sel.xpath('//title/text()').extract_first().strip().split('|')[0]
     name = name.strip()
     if 'Jobs' in name:
         continue
@@ -76,6 +78,25 @@ for profile in profiles:
     education = sel.xpath('//*[contains(@class,"pv-entity__school-name")]/text()').extract()
 
     writer.writerow([name,desg,location,education,driver.current_url])
+    dist_value = sel.xpath('//span[@class="dist-value "]/text()').extract_first().strip()
+    if dist_value and dist_value == '3rd':
+        driver.find_element_by_xpath('//*[text()="More"]').click()
+        sleep(2)
+       
+        driver.find_element_by_xpath('//*[text()="Connect"]').click()
+        sleep(2)
+        driver.find_element_by_xpath('//*[text()="Connect"]').click()
+        sleep(2)
+        driver.find_element_by_xpath('//*[text()="Send"]').click()
+        sleep(2)
+    elif dist_value and dist_value == '2nd':
+        driver.find_element_by_xpath('//*[text()="Connect"]').click()
+        sleep(2)
+        driver.find_element_by_xpath('//*[text()="Send"]').click()
+        sleep(2)
+
+        
+
 
 
 
