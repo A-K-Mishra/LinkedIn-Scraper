@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 import csv
 
 # open csv file to write data out
-writer = csv.writer(open(result_file,'w'))
+writer = csv.writer(open(result_file,'w',encoding = 'utf-8'))
 writer.writerow(['name','job','location','education','LinkedIn Url'])
 
 
@@ -65,7 +65,7 @@ for profile in profiles:
     driver.get(profile)
     sleep(10)
     sel  = Selector(text=driver.page_source)
-    name = sel.xpath('//title/text()').extract_first().strip().split('|')[0]
+    name = sel.xpath('//h1/text()').extract_first()
     name = name.strip()
     if 'Jobs' in name:
         continue
@@ -82,7 +82,9 @@ for profile in profiles:
     if dist_value and dist_value == '3rd':
         driver.find_element_by_xpath('//*[text()="More"]').click()
         sleep(2)
-       
+        cnct_st = sel.xpath('//*[@data-control-name="connect"]/span[1]/text()').extract_first()
+        if cnct_st and cnct_st == 'Pending' :
+            continue
         driver.find_element_by_xpath('//*[text()="Connect"]').click()
         sleep(2)
         driver.find_element_by_xpath('//*[text()="Connect"]').click()
@@ -90,10 +92,15 @@ for profile in profiles:
         driver.find_element_by_xpath('//*[text()="Send"]').click()
         sleep(2)
     elif dist_value and dist_value == '2nd':
+        cnct_st = sel.xpath('//*[@data-control-name="connect"]/span[1]/text()').extract_first()
+        if cnct_st and cnct_st == 'Pending' :
+            continue
         driver.find_element_by_xpath('//*[text()="Connect"]').click()
         sleep(2)
         driver.find_element_by_xpath('//*[text()="Send"]').click()
         sleep(2)
+    else:
+        continue
 
         
 
