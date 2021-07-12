@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 import csv
 
 # open csv file to write data out
-writer = csv.writer(open(result_file,'w',encoding = 'utf-8'))
+writer = csv.writer(open(result_file,'a',encoding = 'utf-8'))
 writer.writerow(['name','job','location','education','LinkedIn Url'])
 
 
@@ -44,31 +44,50 @@ sleep(2)
 #click submit
 driver.find_element_by_xpath('//button[text()="Submit"]').click()
 print('You have successfully logged in ...')
-
-
-#go to google.com to search profiles
-driver.get('https://www.google.com/')
-sleep(2)
-search_input = driver.find_element_by_name('q')
-search_input.send_keys(search_query)
 sleep(1)
-search_input.send_keys(Keys.RETURN)
-sleep(3)
 
-
-# get the search  results
-profiles = driver.find_elements_by_xpath('//*[@class="g"]/div/div/div/a')
-profiles=[profile.get_attribute('href') for profile in profiles]
-sleep(2)
-
-for profile in profiles:
-    driver.get(profile)
-    sleep(10)
-    sel  = Selector(text=driver.page_source)
-    name = sel.xpath('//h1/text()').extract_first()
-    name = name.strip()
-    if 'Jobs' in name:
+#get linked in search bar
+search_box = driver.find_element_by_xpath("//input[contains(@class,'search-global-typeahead__input')]")
+search_box.send_keys(search_query)
+search_box.send_keys(Keys.RETURN)
+sleep(1)
+while True :
+    try :
+        url = driver.current_url.split('/')
+        url[5] = 'people'
+        url = '/'.join(url)
+    except:
         continue
+    break
+
+
+driver.get(url)
+sleep(2)
+while True:
+    try:
+        #get list of profiles
+        profiles = driver.find_elements_by_xpath("//li[@class='reusable-search__result-container ']")
+    except:
+        continue
+    break
+profile_urls = []
+for profile in profiles:
+    name = profile.find_element_by_xpath('.//a/span/span').text
+    try:
+        profile.find_element_by_xpath('.//button/span[text()="Connect"]').click()
+        try:
+            sendBtn = driver.find_element_by_xpath("//div[@role='dialog']//button/span[text()='Send']")
+            sendBtn.click()
+        except:
+            continue
+    except:
+        continue
+    profile_urls.append([name,profile.find_element_by_xpath('.//a').get_attribute('href')])
+
+for profile_url in profile_urls:
+    driver.get(profile_url[1])
+    sleep(5)
+    sel  = Selector(text=driver.page_source)
     desg = sel.xpath('//main//section//div/h1/../following-sibling::div[1]/text()').extract_first()
     if desg :
         desg = desg.strip()
@@ -77,36 +96,7 @@ for profile in profiles:
         location = location.strip()
     education = sel.xpath('//*[contains(@class,"pv-entity__school-name")]/text()').extract()
 
-    writer.writerow([name,desg,location,education,driver.current_url])
-    dist_value = sel.xpath('//span[@class="dist-value "]/text()').extract_first().strip()
-    if dist_value and dist_value == '3rd':
-        driver.find_element_by_xpath('//*[text()="More"]').click()
-        sleep(2)
-        cnct_st = sel.xpath('//*[@data-control-name="connect"]/span[1]/text()').extract_first()
-        if cnct_st and cnct_st == 'Pending' :
-            continue
-        driver.find_element_by_xpath('//*[text()="Connect"]').click()
-        sleep(2)
-        driver.find_element_by_xpath('//*[text()="Connect"]').click()
-        sleep(2)
-        driver.find_element_by_xpath('//*[text()="Send"]').click()
-        sleep(2)
-    elif dist_value and dist_value == '2nd':
-        cnct_st = sel.xpath('//*[@data-control-name="connect"]/span[1]/text()').extract_first()
-        if cnct_st and cnct_st == 'Pending' :
-            continue
-        driver.find_element_by_xpath('//*[text()="Connect"]').click()
-        sleep(2)
-        driver.find_element_by_xpath('//*[text()="Send"]').click()
-        sleep(2)
-    else:
-        continue
-
-        
-
-
-
-
-
+    writer.writerow([profile_url[0],desg,location,education,driver.current_url])
+    
 driver.quit()
 
